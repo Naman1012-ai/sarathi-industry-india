@@ -71,6 +71,12 @@ export interface Products {
   modelNumber?: string;
   /** @wixFieldType url */
   specificationsUrl?: string;
+  /** @wixFieldType text */
+  industry?: string;
+  /** @wixFieldType text */
+  application?: string;
+  /** @wixFieldType boolean */
+  isEcoFriendly?: boolean;
 }
 
 

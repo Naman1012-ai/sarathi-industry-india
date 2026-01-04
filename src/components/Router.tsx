@@ -8,13 +8,15 @@ import ProductsPage from '@/components/pages/ProductsPage';
 import ProductDetailPage from '@/components/pages/ProductDetailPage';
 import BusinessDivisionPage from '@/components/pages/BusinessDivisionPage';
 import ContactPage from '@/components/pages/ContactPage';
+import InquiryBasket from '@/components/InquiryBasket';
 
-// Layout component that includes ScrollToTop
+// Layout component that includes ScrollToTop and InquiryBasket
 function Layout() {
   return (
     <>
       <ScrollToTop />
       <Outlet />
+      <InquiryBasket />
     </>
   );
 }
