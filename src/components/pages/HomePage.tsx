@@ -1,427 +1,427 @@
-// HPI 1.6-V
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
-import { ArrowRight, CheckCircle, Droplet, Leaf, Zap, BarChart3, Globe, ShieldCheck, ChevronDown } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowRight, CheckCircle, Award, TrendingUp, Users, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { BaseCrudService } from '@/integrations';
-import { BusinessDivisions } from '@/entities';
-
-// --- Utility Components for Motion & Interaction ---
-
-type AnimatedElementProps = {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-  threshold?: number;
-};
-
-const AnimatedElement: React.FC<AnimatedElementProps> = ({ children, className, delay = 0, threshold = 0.1 }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsVisible(true);
-        observer.unobserve(element);
-      }
-    }, { threshold });
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return (
-    <div 
-      ref={ref} 
-      className={`transition-all duration-1000 ease-out ${className || ''}`}
-      style={{ 
-        opacity: isVisible ? 1 : 0, 
-        transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
-        transitionDelay: `${delay}ms`
-      }}
-    >
-      {children}
-    </div>
-  );
-};
-
-const ParallaxImage: React.FC<{ src: string; alt: string; className?: string; id: string }> = ({ src, alt, className, id }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
-  
-  const y = useTransform(scrollYProgress, [0, 1], ["-10%", "10%"]);
-
-  return (
-    <div ref={ref} className={`overflow-hidden relative ${className}`}>
-      <motion.div style={{ y }} className="w-full h-[120%] -mt-[10%] absolute top-0 left-0">
-        <Image
-          src={src}
-          alt={alt}
-          className="w-full h-full object-cover"
-          width={1200}
-        />
-      </motion.div>
-    </div>
-  );
-};
-
-// --- Main Component ---
+import { BusinessDivisions, Products } from '@/entities';
 
 export default function HomePage() {
-  // --- 1. Data Fidelity Protocol: Canonize & Preserve ---
-  const [divisions, setDivisions] = useState<BusinessDivisions[]>([]);
+  const [products, setProducts] = useState<Products[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Products | null>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
 
   useEffect(() => {
-    const fetchDivisions = async () => {
-      const { items } = await BaseCrudService.getAll<BusinessDivisions>('businessdivisions');
-      setDivisions(items.filter((d) => d.isActive));
+    const fetchProducts = async () => {
+      const { items } = await BaseCrudService.getAll<Products>('products');
+      setProducts(items.slice(0, 4));
+      if (items.length > 0) {
+        setSelectedProduct(items[0]);
+      }
     };
-    fetchDivisions();
+    fetchProducts();
   }, []);
 
-  const divisionIcons = {
-    'water-solutions': Droplet,
-    'bio-waste-management': Leaf,
-    'biogas-solutions': Zap,
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
   };
 
-  const values = [
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: 'easeOut' },
+    },
+  } as const;
+
+  const industries = [
+    { name: 'Distillery', icon: '🏭' },
+    { name: 'Food & Beverage', icon: '🍽️' },
+    { name: 'Sugar Mills', icon: '🌾' },
+    { name: 'Dairy Industry', icon: '🥛' },
+    { name: 'Hospitality', icon: '🏨' },
+    { name: 'Municipal', icon: '🏛️' },
+  ];
+
+  const whyChooseUs = [
     {
-      title: 'Innovation',
-      description: 'Cutting-edge technology and sustainable solutions for modern industrial challenges.',
+      title: 'Trusted Provider',
+      description: '25+ years of proven expertise serving 1000+ satisfied customers across India',
+      icon: Award,
     },
     {
-      title: 'Quality',
-      description: 'Uncompromising standards in every product and service we deliver.',
+      title: 'Cost-Effective',
+      description: 'Optimized solutions that reduce operational costs while maximizing efficiency',
+      icon: TrendingUp,
     },
     {
-      title: 'Reliability',
-      description: 'Trusted partner for industries across India with proven track record.',
+      title: 'Technical Expertise',
+      description: 'Dedicated team of engineers and specialists with deep industry knowledge',
+      icon: Users,
     },
     {
-      title: 'Sustainability',
-      description: 'Committed to environmental responsibility and green technology.',
+      title: 'Reliable Performance',
+      description: '24/7 support and maintenance ensuring uninterrupted operations',
+      icon: ShieldCheck,
     },
   ];
 
-  // --- New Static Data for Enrichment ---
   const stats = [
-    { label: "Years of Excellence", value: "25+", icon: ShieldCheck },
-    { label: "Projects Delivered", value: "500+", icon: BarChart3 },
-    { label: "Global Partners", value: "40+", icon: Globe },
+    { value: '25+', label: 'Years of Experience' },
+    { value: '1000+', label: 'Satisfied Customers' },
+    { value: '14', label: 'Industries Served' },
+    { value: '22', label: 'Cities Across India' },
   ];
 
-  // --- Scroll Progress for Global Bar ---
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
+  const productBenefits = [
+    'Advanced Technology',
+    'Energy Efficient',
+    'Cost Effective',
+  ];
 
   return (
-    <div className="min-h-screen bg-background font-paragraph text-foreground selection:bg-secondary selection:text-secondary-foreground overflow-clip">
-      {/* Global Scroll Progress Bar */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-secondary z-50 origin-left"
-        style={{ scaleX }}
-      />
-
+    <div className="min-h-screen bg-background">
       <Header />
 
-      {/* --- HERO SECTION: Cinematic Parallax --- */}
-      <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
-        {/* Background Parallax Layer */}
-        <div className="absolute inset-0 z-0">
-          <ParallaxImage 
-            src="https://static.wixstatic.com/media/5c01b6_b95cde5649b24a0398f292d852c48b99~mv2.png?originWidth=1152&originHeight=640"
-            alt="Sarathi Industry India - Advanced Industrial Facility"
-            className="w-full h-full"
-            id="hero-bg"
+      {/* ===== HERO SECTION: Split Layout with Parallax ===== */}
+      <section
+        ref={heroRef}
+        className="relative h-screen flex items-center overflow-hidden"
+      >
+        {/* Parallax Background */}
+        <motion.div
+          style={{ y }}
+          className="absolute inset-0 z-0"
+        >
+          <Image
+            src="https://static.wixstatic.com/media/5c01b6_48bc78ac9b0b4974815c15e9e4bdbe69~mv2.png?originWidth=576&originHeight=448"
+            alt="Industrial facility background"
+            className="w-full h-full object-cover"
+            width={1920}
           />
-          <div className="absolute inset-0 bg-primary/60 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-transparent opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-primary/50" />
+        </motion.div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-[120rem] mx-auto px-8 md:px-20 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Text Content */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.h1
+                variants={itemVariants}
+                className="text-5xl md:text-7xl font-heading font-bold text-primary-foreground mb-6 leading-tight"
+              >
+                Innovating Sustainable Solutions
+              </motion.h1>
+              <motion.p
+                variants={itemVariants}
+                className="text-xl md:text-2xl font-paragraph text-primary-foreground/90 mb-8 max-w-2xl"
+              >
+                Transforming industrial processes through cutting-edge water treatment, bio-waste management, and biogas technology.
+              </motion.p>
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col sm:flex-row gap-4"
+              >
+                <Link to="/contact#quote">
+                  <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg px-8 py-6 h-auto text-lg font-paragraph font-bold">
+                    Get Started
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link to="/products">
+                  <Button
+                    variant="outline"
+                    className="border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary rounded-lg px-8 py-6 h-auto text-lg font-paragraph font-bold"
+                  >
+                    Explore Solutions
+                  </Button>
+                </Link>
+              </motion.div>
+            </motion.div>
+
+            {/* Hero Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="relative h-[500px] hidden lg:block"
+            >
+              <Image
+                src="https://static.wixstatic.com/media/5c01b6_76e3ff8c52564e77a43ba8eb776967ce~mv2.png?originWidth=576&originHeight=448"
+                alt="Sarathi solutions showcase"
+                className="w-full h-full object-cover rounded-lg"
+                width={600}
+              />
+            </motion.div>
+          </div>
         </div>
+      </section>
 
-        {/* Content Layer */}
-        <div className="relative z-10 container mx-auto px-6 md:px-12 flex flex-col items-center text-center">
-          <AnimatedElement delay={200}>
-            <span className="inline-block py-1 px-3 border border-secondary/50 rounded-full text-secondary text-sm tracking-[0.2em] uppercase mb-6 backdrop-blur-sm bg-primary/20">
-              Est. 1998 • Industrial Excellence
-            </span>
-          </AnimatedElement>
-          
-          <AnimatedElement delay={400}>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold text-primary-foreground mb-8 leading-[0.9] tracking-tight">
-              Engineering <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-white">
-                The Future
-              </span>
-            </h1>
-          </AnimatedElement>
-
-          <AnimatedElement delay={600}>
-            <p className="text-lg md:text-2xl text-primary-foreground/80 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
-              Leading the revolution in sustainable industrial solutions through innovation in water treatment, bio-waste management, and biogas technology.
+      {/* ===== PRODUCT PREVIEW: 4-Card Grid with Quick View ===== */}
+      <section className="py-24 bg-accent">
+        <div className="max-w-[100rem] mx-auto px-8 md:px-20">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-6">
+              Featured Products
+            </h2>
+            <p className="text-lg md:text-xl font-paragraph text-foreground max-w-3xl mx-auto">
+              Discover our range of bioculture and industrial solutions
             </p>
-          </AnimatedElement>
+          </motion.div>
 
-          <AnimatedElement delay={800}>
-            <div className="flex flex-col sm:flex-row gap-6 items-center">
-              <Link to="/about">
-                <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-none px-10 py-7 text-lg tracking-wide transition-all duration-300 hover:translate-x-1">
-                  Discover Our Story
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {products.map((product) => (
+              <motion.div
+                key={product._id}
+                variants={itemVariants}
+                className="bg-background border border-light-grey overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setSelectedProduct(product)}
+              >
+                <div className="relative h-48 overflow-hidden bg-primary/10">
+                  <Image
+                    src={product.productImage || 'https://static.wixstatic.com/media/5c01b6_e2986c2a822747459ec7debd45b95c6b~mv2.png?originWidth=384&originHeight=192'}
+                    alt={product.productName || 'Product'}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    width={400}
+                  />
+                  <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/40 transition-colors flex items-center justify-center">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-paragraph font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      Quick View
+                    </motion.button>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <h3 className="text-lg font-heading font-bold text-primary mb-3 line-clamp-2">
+                    {product.productName}
+                  </h3>
+                  <div className="space-y-2">
+                    {productBenefits.map((benefit) => (
+                      <div key={benefit} className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-secondary flex-shrink-0" />
+                        <span className="font-paragraph text-sm text-foreground">{benefit}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <Link to="/products">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-8 py-4 h-auto text-lg">
+                View All Products
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== EXPERTISE SECTION with Bento Grid ===== */}
+      <section className="py-24 bg-background">
+        <div className="max-w-[100rem] mx-auto px-8 md:px-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start mb-16">
+            {/* Text Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-6">
+                Our Expertise
+              </h2>
+              <p className="font-paragraph text-lg text-foreground mb-6 leading-relaxed">
+                Transforming wastewater treatment, bio-waste management, and biogas production into sustainable competitive advantages. Our integrated solutions combine advanced technology with proven methodologies to deliver measurable results across diverse industrial sectors.
+              </p>
+              <p className="font-paragraph text-lg text-foreground leading-relaxed">
+                With decades of experience and continuous innovation, we've established ourselves as the go-to partner for industries seeking reliable, cost-effective, and environmentally responsible solutions.
+              </p>
+            </motion.div>
+
+            {/* Bento Grid - Industries */}
+            <motion.div
+              className="grid grid-cols-2 gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {industries.map((industry) => (
+                <motion.div
+                  key={industry.name}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="p-6 bg-accent border border-light-grey rounded-lg cursor-pointer transition-all hover:shadow-lg hover:border-secondary"
+                >
+                  <div className="text-4xl mb-3">{industry.icon}</div>
+                  <h3 className="font-heading font-bold text-primary text-lg">{industry.name}</h3>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== WHY CHOOSE US SECTION ===== */}
+      <section className="py-24 bg-accent">
+        <div className="max-w-[100rem] mx-auto px-8 md:px-20">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-6">
+              Why Choose Sarathi
+            </h2>
+            <p className="text-lg md:text-xl font-paragraph text-foreground max-w-3xl mx-auto">
+              Industry-leading solutions backed by expertise, reliability, and commitment to your success
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {whyChooseUs.map((item) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={item.title}
+                  variants={itemVariants}
+                  whileHover={{ y: -8 }}
+                  className="p-8 bg-background border border-light-grey hover:shadow-lg transition-all"
+                >
+                  <Icon className="w-12 h-12 text-secondary mb-4" />
+                  <h3 className="text-xl font-heading font-bold text-primary mb-3">
+                    {item.title}
+                  </h3>
+                  <p className="font-paragraph text-base text-foreground">
+                    {item.description}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== STATS COUNTER: Full-Width Dark Section ===== */}
+      <section className="py-24 bg-primary text-primary-foreground">
+        <div className="max-w-[100rem] mx-auto px-8 md:px-20">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                variants={itemVariants}
+                className="text-center"
+              >
+                <motion.div
+                  className="text-5xl md:text-6xl font-heading font-bold mb-3"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1, duration: 0.6 }}
+                >
+                  {stat.value}
+                </motion.div>
+                <p className="font-paragraph text-lg text-primary-foreground/80">
+                  {stat.label}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== CTA SECTION ===== */}
+      <section className="py-24 bg-background">
+        <div className="max-w-[100rem] mx-auto px-8 md:px-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-6">
+              Ready to Transform Your Operations?
+            </h2>
+            <p className="text-lg md:text-xl font-paragraph text-foreground mb-8 max-w-3xl mx-auto">
+              Partner with Sarathi Industry India for innovative, sustainable solutions tailored to your industrial needs.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/contact#quote">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-8 py-6 h-auto text-lg">
+                  Request a Quote
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link to="/contact#quote">
+              <Link to="/about">
                 <Button
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white hover:text-primary rounded-none px-10 py-7 text-lg tracking-wide backdrop-blur-sm transition-all duration-300"
+                  className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg px-8 py-6 h-auto text-lg"
                 >
-                  Request Quote
+                  Learn More
                 </Button>
               </Link>
             </div>
-          </AnimatedElement>
-        </div>
-
-        {/* Scroll Indicator */}
-        <motion.div 
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 flex flex-col items-center gap-2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <span className="text-xs uppercase tracking-widest">Scroll</span>
-          <ChevronDown className="w-5 h-5" />
-        </motion.div>
-      </section>
-
-      {/* --- STATS STRIP: Authoritative Proof --- */}
-      <section className="py-20 bg-background border-b border-primary/5">
-        <div className="container mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {stats.map((stat, index) => (
-              <AnimatedElement key={index} delay={index * 150} className="flex items-center gap-6 group">
-                <div className="p-4 bg-primary/5 rounded-full group-hover:bg-secondary/10 transition-colors duration-500">
-                  <stat.icon className="w-8 h-8 text-primary group-hover:text-secondary transition-colors duration-500" />
-                </div>
-                <div>
-                  <h3 className="text-4xl font-heading font-bold text-primary mb-1">{stat.value}</h3>
-                  <p className="text-sm uppercase tracking-wider text-foreground/60">{stat.label}</p>
-                </div>
-              </AnimatedElement>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- VALUES SECTION: Sticky Layout --- */}
-      <section className="relative bg-accent py-32">
-        <div className="container mx-auto px-6 md:px-12">
-          <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
-            {/* Sticky Header */}
-            <div className="lg:w-1/3">
-              <div className="sticky top-32">
-                <AnimatedElement>
-                  <h2 className="text-4xl md:text-6xl font-heading font-bold text-primary mb-8 leading-tight">
-                    Engineering <br/>
-                    <span className="text-secondary">Excellence</span>
-                  </h2>
-                  <p className="text-lg text-foreground/70 mb-12 leading-relaxed">
-                    With decades of expertise, Sarathi Industry India delivers comprehensive solutions that transform industrial processes, reduce environmental impact, and drive operational efficiency.
-                  </p>
-                  <div className="h-1 w-24 bg-secondary" />
-                </AnimatedElement>
-              </div>
-            </div>
-
-            {/* Scrolling Grid */}
-            <div className="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8">
-              {values.map((value, index) => (
-                <AnimatedElement key={value.title} delay={index * 100}>
-                  <div className="group p-10 bg-background border border-primary/5 hover:border-secondary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 h-full flex flex-col">
-                    <div className="mb-6 inline-flex p-3 bg-primary/5 text-primary rounded-lg group-hover:bg-secondary group-hover:text-secondary-foreground transition-colors duration-500">
-                      <CheckCircle className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-2xl font-heading font-bold text-primary mb-4 group-hover:translate-x-2 transition-transform duration-300">
-                      {value.title}
-                    </h3>
-                    <p className="text-foreground/70 leading-relaxed">
-                      {value.description}
-                    </p>
-                  </div>
-                </AnimatedElement>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --- BUSINESS DIVISIONS: Vertical Parallax Reveal --- */}
-      <section className="py-32 bg-primary text-primary-foreground overflow-hidden">
-        <div className="container mx-auto px-6 md:px-12 mb-24 text-center">
-          <AnimatedElement>
-            <h2 className="text-4xl md:text-6xl font-heading font-bold mb-6">Our Business Divisions</h2>
-            <p className="text-xl text-primary-foreground/60 max-w-2xl mx-auto">
-              Specialized solutions across three core areas of industrial sustainability.
-            </p>
-          </AnimatedElement>
-        </div>
-
-        <div className="flex flex-col gap-0">
-          {divisions.map((division, index) => {
-            const Icon = divisionIcons[division.slug as keyof typeof divisionIcons] || Droplet;
-            const isEven = index % 2 === 0;
-
-            return (
-              <div key={division._id} className="relative min-h-[80vh] flex items-center py-20">
-                {/* Background Number */}
-                <div className={`absolute top-20 ${isEven ? 'left-10' : 'right-10'} text-[20rem] font-heading font-bold text-white/5 leading-none select-none pointer-events-none z-0`}>
-                  0{index + 1}
-                </div>
-
-                <div className="container mx-auto px-6 md:px-12 relative z-10">
-                  <div className={`flex flex-col lg:flex-row items-center gap-16 ${isEven ? '' : 'lg:flex-row-reverse'}`}>
-                    
-                    {/* Image Side */}
-                    <div className="w-full lg:w-1/2">
-                      <AnimatedElement className="relative group">
-                        <div className="absolute -inset-4 border border-secondary/30 translate-x-4 translate-y-4 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-500" />
-                        <div className="relative aspect-[4/3] overflow-hidden bg-background/10">
-                          <Image
-                            src={division.divisionImage || 'https://static.wixstatic.com/media/5c01b6_5e1b051e9d5e483396527964aa7f6e76~mv2.png?originWidth=768&originHeight=576'}
-                            alt={division.divisionName || 'Division Image'}
-                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                            width={800}
-                          />
-                          <div className="absolute inset-0 bg-primary/20 group-hover:bg-transparent transition-colors duration-500" />
-                        </div>
-                      </AnimatedElement>
-                    </div>
-
-                    {/* Content Side */}
-                    <div className="w-full lg:w-1/2">
-                      <AnimatedElement delay={200}>
-                        <div className="flex items-center gap-4 mb-6">
-                          <div className="p-3 bg-secondary/10 rounded-lg">
-                            <Icon className="w-8 h-8 text-secondary" />
-                          </div>
-                          <span className="text-secondary uppercase tracking-widest text-sm font-bold">Division 0{index + 1}</span>
-                        </div>
-                        
-                        <h3 className="text-4xl md:text-5xl font-heading font-bold mb-6 leading-tight">
-                          {division.divisionName}
-                        </h3>
-                        
-                        <p className="text-lg text-primary-foreground/70 mb-8 leading-relaxed max-w-xl">
-                          {division.shortDescription}
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4">
-                          <Link to={`/business/${division.slug}`}>
-                            <Button className="bg-white text-primary hover:bg-secondary hover:text-secondary-foreground rounded-none px-8 py-6 text-lg transition-all duration-300">
-                              Explore Division
-                              <ArrowRight className="ml-2 w-5 h-5" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </AnimatedElement>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* --- PROCESS / VISUAL BREAK --- */}
-      <section className="py-32 bg-background relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-        
-        <div className="container mx-auto px-6 md:px-12 text-center mb-20">
-          <AnimatedElement>
-            <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-6">Our Approach</h2>
-            <p className="text-lg text-foreground/60 max-w-2xl mx-auto">
-              A systematic methodology ensuring quality, safety, and efficiency in every project we undertake.
-            </p>
-          </AnimatedElement>
-        </div>
-
-        <div className="container mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
-            {/* Connecting Line */}
-            <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-primary/10 -z-10" />
-
-            {[
-              { step: "01", title: "Consultation", desc: "Understanding your specific industrial requirements." },
-              { step: "02", title: "Engineering", desc: "Custom design and technical planning." },
-              { step: "03", title: "Implementation", desc: "Precision installation and system integration." },
-              { step: "04", title: "Support", desc: "Ongoing maintenance and optimization." }
-            ].map((item, i) => (
-              <AnimatedElement key={i} delay={i * 150} className="bg-background pt-4">
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-accent border-2 border-primary/10 flex items-center justify-center text-xl font-bold text-primary mb-6 relative z-10 shadow-lg">
-                    {item.step}
-                  </div>
-                  <h3 className="text-xl font-heading font-bold text-primary mb-3">{item.title}</h3>
-                  <p className="text-sm text-foreground/60 px-4">{item.desc}</p>
-                </div>
-              </AnimatedElement>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- CTA SECTION: High Contrast --- */}
-      <section className="relative py-32 bg-primary overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-           <Image 
-             src="https://static.wixstatic.com/media/5c01b6_d0eebd96b6ec4fa4a16e4b28d1ed343a~mv2.png?originWidth=1152&originHeight=640"
-             alt="Industrial Pattern"
-             className="w-full h-full object-cover"
-             width={1200}
-           />
-        </div>
-        
-        <div className="container mx-auto px-6 md:px-12 relative z-10 text-center">
-          <AnimatedElement>
-            <h2 className="text-5xl md:text-7xl font-heading font-bold text-white mb-8">
-              Ready to Transform?
-            </h2>
-            <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-12 font-light">
-              Partner with Sarathi Industry India for innovative, sustainable solutions tailored to your industrial needs.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link to="/contact#quote">
-                <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-none px-12 py-8 text-xl font-bold tracking-wide shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                  Request a Quote
-                  <ArrowRight className="ml-2 w-6 h-6" />
-                </Button>
-              </Link>
-              <Link to="/products">
-                <Button
-                  variant="outline"
-                  className="border-2 border-white/20 text-white hover:bg-white hover:text-primary rounded-none px-12 py-8 text-xl font-bold tracking-wide backdrop-blur-sm transition-all duration-300"
-                >
-                  View Products
-                </Button>
-              </Link>
-            </div>
-          </AnimatedElement>
+          </motion.div>
         </div>
       </section>
 

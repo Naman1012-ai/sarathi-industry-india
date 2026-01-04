@@ -102,7 +102,7 @@ export default function ContactPage() {
       {/* Hero Section */}
       <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
         <Image
-          src="https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.png?id=contact-hero-image"
+          src="https://static.wixstatic.com/media/5c01b6_2265381b4a29412c97b1f4a0d4febcb7~mv2.png?originWidth=1920&originHeight=512"
           alt="Contact Sarathi Industry India - Get in touch with our team"
           className="absolute inset-0 w-full h-full object-cover"
           width={1920}
@@ -281,7 +281,7 @@ export default function ContactPage() {
             >
               <div className="relative h-[400px] bg-background border border-light-grey overflow-hidden">
                 <Image
-                  src="https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.png?id=contact-form-image"
+                  src="https://static.wixstatic.com/media/5c01b6_f86ed5de60e044259a136ac476caec14~mv2.png?originWidth=768&originHeight=384"
                   alt="Sarathi Industry India - Expert team ready to assist"
                   className="w-full h-full object-cover"
                   width={800}
@@ -344,7 +344,7 @@ export default function ContactPage() {
 
           <div className="relative h-[500px] bg-accent border border-light-grey overflow-hidden">
             <Image
-              src="https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.png?id=contact-map-placeholder"
+              src="https://static.wixstatic.com/media/5c01b6_0cc584bc7e8e424aa49daf81cb9a2aa8~mv2.png?originWidth=1600&originHeight=448"
               alt="Map showing Sarathi Industry India location in Gurgaon"
               className="w-full h-full object-cover"
               width={1600}
