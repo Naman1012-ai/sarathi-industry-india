@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Send, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Image } from '@/components/ui/image';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { BaseCrudService } from '@/integrations';
 import { QuoteRequests } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
+import { useInquiryStore } from '@/lib/inquiry-store';
 
 export default function ContactPage() {
   const { toast } = useToast();
+  const { items: inquiryItems, clearItems } = useInquiryStore();
   const [formData, setFormData] = useState({
     customerName: '',
     email: '',
@@ -21,6 +24,7 @@ export default function ContactPage() {
     requestDetails: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Scroll to quote form if hash is present
@@ -39,11 +43,60 @@ export default function ContactPage() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // Clear error for this field when user starts typing
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: '',
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Name validation
+    if (!formData.customerName.trim()) {
+      newErrors.customerName = 'Full name is required';
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Phone validation (Indian format)
+    const phoneRegex = /^(\+91[-\s]?)?[6-9]\d{9}$/;
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = 'Phone number is required';
+    } else if (!phoneRegex.test(formData.phoneNumber.replace(/\s/g, ''))) {
+      newErrors.phoneNumber = 'Please enter a valid phone number (10 digits starting with 6-9)';
+    }
+
+    // Message validation
+    if (!formData.requestDetails.trim()) {
+      newErrors.requestDetails = 'Request details are required';
+    } else if (formData.requestDetails.trim().length < 10) {
+      newErrors.requestDetails = 'Please provide at least 10 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSubmitting(true);
+
+    const productIds = inquiryItems.map((item) => item._id).join(',');
 
     const quoteRequest: QuoteRequests = {
       _id: crypto.randomUUID(),
@@ -53,6 +106,8 @@ export default function ContactPage() {
       companyName: formData.companyName,
       requestDetails: formData.requestDetails,
       submissionDate: new Date().toISOString(),
+      productIds: productIds || '',
+      status: 'pending',
     };
 
     await BaseCrudService.create('quoterequests', quoteRequest);
@@ -69,6 +124,7 @@ export default function ContactPage() {
       companyName: '',
       requestDetails: '',
     });
+    clearItems();
     setIsSubmitting(false);
   };
 
@@ -182,6 +238,16 @@ export default function ContactPage() {
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Inquiry Items Alert */}
+                {inquiryItems.length > 0 && (
+                  <Alert className="border-secondary bg-secondary/10">
+                    <AlertCircle className="h-4 w-4 text-secondary" />
+                    <AlertDescription className="text-foreground">
+                      <strong>{inquiryItems.length} product(s)</strong> from your inquiry basket will be included in this request.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <div>
                   <label htmlFor="customerName" className="block font-paragraph text-base text-foreground mb-2">
                     Full Name *
@@ -190,12 +256,16 @@ export default function ContactPage() {
                     id="customerName"
                     name="customerName"
                     type="text"
-                    required
                     value={formData.customerName}
                     onChange={handleChange}
-                    className="h-12 bg-background border-light-grey"
+                    className={`h-12 bg-background border-light-grey ${
+                      errors.customerName ? 'border-destructive' : ''
+                    }`}
                     placeholder="John Doe"
                   />
+                  {errors.customerName && (
+                    <p className="text-destructive text-sm mt-1">{errors.customerName}</p>
+                  )}
                 </div>
 
                 <div>
@@ -206,12 +276,16 @@ export default function ContactPage() {
                     id="email"
                     name="email"
                     type="email"
-                    required
                     value={formData.email}
                     onChange={handleChange}
-                    className="h-12 bg-background border-light-grey"
+                    className={`h-12 bg-background border-light-grey ${
+                      errors.email ? 'border-destructive' : ''
+                    }`}
                     placeholder="john@example.com"
                   />
+                  {errors.email && (
+                    <p className="text-destructive text-sm mt-1">{errors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -222,12 +296,16 @@ export default function ContactPage() {
                     id="phoneNumber"
                     name="phoneNumber"
                     type="tel"
-                    required
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    className="h-12 bg-background border-light-grey"
+                    className={`h-12 bg-background border-light-grey ${
+                      errors.phoneNumber ? 'border-destructive' : ''
+                    }`}
                     placeholder="+91 98765 43210"
                   />
+                  {errors.phoneNumber && (
+                    <p className="text-destructive text-sm mt-1">{errors.phoneNumber}</p>
+                  )}
                 </div>
 
                 <div>
@@ -252,12 +330,16 @@ export default function ContactPage() {
                   <Textarea
                     id="requestDetails"
                     name="requestDetails"
-                    required
                     value={formData.requestDetails}
                     onChange={handleChange}
-                    className="min-h-[150px] bg-background border-light-grey"
+                    className={`min-h-[150px] bg-background border-light-grey ${
+                      errors.requestDetails ? 'border-destructive' : ''
+                    }`}
                     placeholder="Please describe your requirements, project scope, or any specific questions you have..."
                   />
+                  {errors.requestDetails && (
+                    <p className="text-destructive text-sm mt-1">{errors.requestDetails}</p>
+                  )}
                 </div>
 
                 <Button
@@ -342,26 +424,76 @@ export default function ContactPage() {
             </p>
           </div>
 
-          <div className="relative h-[500px] bg-accent border border-light-grey overflow-hidden">
-            <Image
-              src="https://static.wixstatic.com/media/5c01b6_0cc584bc7e8e424aa49daf81cb9a2aa8~mv2.png?originWidth=1600&originHeight=448"
-              alt="Map showing Sarathi Industry India location in Gurgaon"
-              className="w-full h-full object-cover"
-              width={1600}
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
-              <div className="bg-background p-8 border border-light-grey text-center max-w-md">
-                <MapPin className="w-12 h-12 text-secondary mx-auto mb-4" />
-                <h3 className="text-2xl font-heading font-bold text-primary mb-3">
-                  Our Location
-                </h3>
-                <p className="font-paragraph text-base text-foreground">
-                  Industrial Area, Sector 42<br />
-                  Gurgaon, Haryana 122003<br />
-                  India
-                </p>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Map */}
+            <div className="lg:col-span-2 relative h-[500px] bg-accent border border-light-grey overflow-hidden rounded-lg">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3505.8869886485457!2d77.0365!3d28.4595!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d1a8c8c8c8c8d%3A0x8c8c8c8c8c8c8c8c!2sIndustrial%20Area%2C%20Sector%2042%2C%20Gurgaon%2C%20Haryana%20122003!5e0!3m2!1sen!2sin!4v1234567890"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-full"
+              />
             </div>
+
+            {/* Office Addresses */}
+            <motion.div
+              className="space-y-6"
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="p-6 bg-accent border border-light-grey rounded-lg">
+                <h3 className="text-xl font-heading font-bold text-primary mb-4">
+                  Head Office
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60">Address</p>
+                    <p className="font-paragraph font-bold text-foreground">
+                      Industrial Area, Sector 42<br />
+                      Gurgaon, Haryana 122003<br />
+                      India
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60">Phone</p>
+                    <p className="font-paragraph font-bold text-foreground">
+                      +91 124 456 7890
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60">Email</p>
+                    <p className="font-paragraph font-bold text-foreground">
+                      info@sarathiindustry.com
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60">Hours</p>
+                    <p className="font-paragraph font-bold text-foreground">
+                      Mon-Fri: 9:00 AM - 6:00 PM<br />
+                      Sat: 9:00 AM - 2:00 PM
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-primary text-primary-foreground rounded-lg">
+                <h3 className="text-lg font-heading font-bold mb-3">Quick Contact</h3>
+                <p className="font-paragraph text-sm text-primary-foreground/90 mb-4">
+                  Get in touch with our team for immediate assistance
+                </p>
+                <a href="tel:+911244567890">
+                  <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg">
+                    Call Now
+                  </Button>
+                </a>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>

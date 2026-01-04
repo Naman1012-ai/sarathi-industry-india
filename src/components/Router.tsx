@@ -8,6 +8,7 @@ import ProductsPage from '@/components/pages/ProductsPage';
 import ProductDetailPage from '@/components/pages/ProductDetailPage';
 import BusinessDivisionPage from '@/components/pages/BusinessDivisionPage';
 import ContactPage from '@/components/pages/ContactPage';
+import AdminPage from '@/components/pages/AdminPage';
 import InquiryBasket from '@/components/InquiryBasket';
 
 // Layout component that includes ScrollToTop and InquiryBasket
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
       {
         path: "contact",
         element: <ContactPage />,
+      },
+      {
+        path: "admin",
+        element: <AdminPage />,
       },
       {
         path: "*",

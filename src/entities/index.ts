@@ -58,6 +58,12 @@ export interface Products {
   _createdDate?: Date;
   _updatedDate?: Date;
   /** @wixFieldType text */
+  application?: string;
+  /** @wixFieldType boolean */
+  isEcoFriendly?: boolean;
+  /** @wixFieldType text */
+  industry?: string;
+  /** @wixFieldType text */
   productName?: string;
   /** @wixFieldType text */
   shortDescription?: string;
@@ -71,12 +77,6 @@ export interface Products {
   modelNumber?: string;
   /** @wixFieldType url */
   specificationsUrl?: string;
-  /** @wixFieldType text */
-  industry?: string;
-  /** @wixFieldType text */
-  application?: string;
-  /** @wixFieldType boolean */
-  isEcoFriendly?: boolean;
 }
 
 
@@ -100,4 +100,8 @@ export interface QuoteRequests {
   requestDetails?: string;
   /** @wixFieldType datetime */
   submissionDate?: Date | string;
+  /** @wixFieldType text */
+  productIds?: string;
+  /** @wixFieldType text */
+  status?: string;
 }
